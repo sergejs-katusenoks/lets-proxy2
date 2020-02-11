@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime"
 	"time"
+	"crypto/tls"
 
 	"go.uber.org/zap/zapcore"
 
