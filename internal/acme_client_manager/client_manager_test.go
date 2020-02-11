@@ -12,15 +12,15 @@ import (
 
 	"github.com/maxatome/go-testdeep"
 
-	"github.com/rekby/lets-proxy2/internal/cache"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/cache"
 
 	"github.com/gojuno/minimock/v3"
-	"github.com/rekby/lets-proxy2/internal/th"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/th"
 )
 
 const testACMEServer = "http://localhost:4001/directory"
 
-//go:generate minimock -i github.com/rekby/lets-proxy2/internal/cache.Bytes -o ./cache_bytes_mock_test.go
+//go:generate minimock -i github.com/sergejs-katusenoks/lets-proxy2/internal/cache.Bytes -o ./cache_bytes_mock_test.go
 func TestClientManagerCreateNew(t *testing.T) {
 	ctx, flush := th.TestContext()
 	defer flush()

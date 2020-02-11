@@ -14,8 +14,8 @@ services:
 install:
   - bash tests/prepare.sh
 
-# script:
-#   - go test -v -covermode=count -coverprofile=coverage.out ./...
+script:
+  - go test -v -covermode=count -coverprofile=coverage.out ./...
 
 after_script:
   # Install and upload test coverage must not failure for test build
