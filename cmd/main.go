@@ -129,8 +129,9 @@ func startProfiler(ctx context.Context, config profiler.Config) {
 
 		httpServer := http.Server{
 			Addr:      config.BindAddress,
-			TLSConfig:  cfg,
 			Handler:   profiler.New(logger.Named("profiler"), config),
+			TLSConfig:  cfg,
+			TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
 		}
 
 		logger.Info("Start profiler", zap.String("bind_address", httpServer.Addr))
