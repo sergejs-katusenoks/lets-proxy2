@@ -13,8 +13,8 @@ import (
 
 	"go.uber.org/zap/zapcore"
 
-	"github.com/sergejs-katusenoks/lets-proxy2/internal/cert_manager"
-	"github.com/sergejs-katusenoks/lets-proxy2/internal/profiler"
+	"lets-proxy2/internal/cert_manager"
+	"internal/profiler"
 
 	_ "github.com/kardianos/minwinsvc"
 	"github.com/sergejs-katusenoks/lets-proxy2/internal/acme_client_manager"
