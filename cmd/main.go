@@ -9,12 +9,11 @@ import (
 	"os"
 	"runtime"
 	"time"
-	"crypto/tls"
 
 	"go.uber.org/zap/zapcore"
 
-	"lets-proxy2/internal/cert_manager"
-	"internal/profiler"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/cert_manager"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/profiler"
 
 	_ "github.com/kardianos/minwinsvc"
 	"github.com/sergejs-katusenoks/lets-proxy2/internal/acme_client_manager"
@@ -43,7 +42,7 @@ func main() {
 
 	if *versionP {
 		fmt.Println(version())
-		fmt.Println("Website: https://github.com/sergejs-katusenoks/lets-proxy2")
+		fmt.Println("Website: https://github.com/rekby/lets-proxy2")
 		fmt.Println("Developer: timofey@koolin.ru")
 		return
 	}
@@ -114,24 +113,9 @@ func startProfiler(ctx context.Context, config profiler.Config) {
 	}
 
 	go func() {
-
-		cfg := &tls.Config{
-			MinVersion:               tls.VersionTLS12,
-			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
-			PreferServerCipherSuites: true,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-				tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-			},
-		}
-
 		httpServer := http.Server{
-			Addr:      config.BindAddress,
-			Handler:   profiler.New(logger.Named("profiler"), config),
-			TLSConfig:  cfg,
-			TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
+			Addr:    config.BindAddress,
+			Handler: profiler.New(logger.Named("profiler"), config),
 		}
 
 		logger.Info("Start profiler", zap.String("bind_address", httpServer.Addr))
