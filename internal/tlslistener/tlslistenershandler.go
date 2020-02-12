@@ -214,6 +214,7 @@ func (p *ListenersHandler) handleTCPTLSConnection(ctx context.Context, conn net.
 		zap.String("local_addr", conn.LocalAddr().String()))
 
 	tlsConn := tls.Server(contextConn, &p.tlsConfig)
+	log.DebugInfo("Created tls connection", zap.String("tlsVersion", tlsConn.vers))
 	err := tlsConn.Handshake()
 	log.DebugInfo(logger, err, "TLS Handshake")
 
