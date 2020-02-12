@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/rekby/lets-proxy2/internal/th"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/th"
 
 	"github.com/maxatome/go-testdeep"
 )

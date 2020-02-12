@@ -12,16 +12,16 @@ services:
   - docker
 
 install:
-  - test -n "$TRAVIS_TAG" || bash tests/prepare.sh
+  - bash tests/prepare.sh
 
 script:
-  - test -n "$TRAVIS_TAG" || go test -v -covermode=count -coverprofile=coverage.out ./...
+  - go test -v -covermode=count -coverprofile=coverage.out ./...
 
 after_script:
   # Install and upload test coverage must not failure for test build
-  - test -n "$TRAVIS_TAG" || go get golang.org/x/tools/cmd/cover
-  - test -n "$TRAVIS_TAG" || go get github.com/mattn/goveralls
-  - test -n "$TRAVIS_TAG" || goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
+  - goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 
 before_deploy:
   - git config --local user.name "$GIT_NAME"
@@ -29,7 +29,7 @@ before_deploy:
   - BUILD_TIME=$(TZ=UTC date --rfc-3339=seconds)
   - go get github.com/mitchellh/gox
   - mkdir -p output
-  - OS_ARCH_BUILDS="darwin/amd64 linux/386 linux/amd64 linux/arm freebsd/386 freebsd/amd64 freebsd/arm windows/386 windows/amd64"
+  - OS_ARCH_BUILDS="linux/amd64"
   - GO111MODULE=on CGO_ENABLED=0 gox --mod=vendor -osarch "$OS_ARCH_BUILDS" --ldflags "-X \"main.VERSION=$TRAVIS_TAG+build-$TRAVIS_BUILD_NUMBER, Build time $BUILD_TIME, commit $TRAVIS_COMMIT\"" --output="output/lets-proxy_{{.OS}}_{{.Arch}}" -verbose --rebuild ./cmd/
   - bash tests/make_archives.sh
 
@@ -37,7 +37,7 @@ deploy:
   skip_cleanup: true
   provider: releases
   on:
-    repo: rekby/lets-proxy2
+    repo: sergejs-katusenoks/lets-proxy2
     tags: true
   api_key: $GITHUB_TOKEN
   file_glob: true

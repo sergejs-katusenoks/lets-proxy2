@@ -1,7 +1,7 @@
 //nolint:golint
 package cert_manager
 
-//go:generate minimock -i github.com/rekby/lets-proxy2/internal/cache.Bytes -o ./cache_bytes_mock_test.go
+//go:generate minimock -i github.com/sergejs-katusenoks/lets-proxy2/internal/cache.Bytes -o ./cache_bytes_mock_test.go
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rekby/lets-proxy2/internal/cache"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/cache"
 
 	"go.uber.org/zap"
 
@@ -26,7 +26,7 @@ import (
 
 	"github.com/maxatome/go-testdeep"
 
-	"github.com/rekby/lets-proxy2/internal/th"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/th"
 
 	"golang.org/x/crypto/acme"
 )

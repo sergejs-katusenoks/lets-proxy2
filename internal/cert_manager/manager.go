@@ -20,10 +20,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rekby/lets-proxy2/internal/cache"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/cache"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/rekby/lets-proxy2/internal/log"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/log"
 
 	zc "github.com/rekby/zapcontext"
 	"go.uber.org/zap"

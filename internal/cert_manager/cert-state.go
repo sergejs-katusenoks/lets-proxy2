@@ -8,8 +8,8 @@ import (
 
 	zc "github.com/rekby/zapcontext"
 
-	"github.com/rekby/lets-proxy2/internal/cache"
-	"github.com/rekby/lets-proxy2/internal/log"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/cache"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/log"
 
 	"go.uber.org/zap"
 )

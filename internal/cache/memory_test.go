@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/rekby/lets-proxy2/internal/th"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/th"
 )
 
 func TestMemoryCache(t *testing.T) {
