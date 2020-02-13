@@ -16,7 +16,7 @@ import (
 	"github.com/maxatome/go-testdeep"
 	zc "github.com/rekby/zapcontext"
 
-	"github.com/rekby/lets-proxy2/internal/th"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/th"
 )
 
 func TestHttpProxy_HandleHttpValidationDefault(t *testing.T) {

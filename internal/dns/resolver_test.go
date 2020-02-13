@@ -9,7 +9,7 @@ import (
 
 	"github.com/gojuno/minimock"
 
-	"github.com/rekby/lets-proxy2/internal/th"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/th"
 
 	"github.com/maxatome/go-testdeep"
 	mdns "github.com/miekg/dns"

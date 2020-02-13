@@ -8,11 +8,11 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/rekby/lets-proxy2/internal/contextlabel"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/contextlabel"
 
 	"golang.org/x/crypto/acme"
 
-	"github.com/rekby/lets-proxy2/internal/log"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/log"
 
 	zc "github.com/rekby/zapcontext"
 	uuid "github.com/satori/go.uuid"
@@ -139,6 +139,17 @@ func (p *ListenersHandler) init() {
 
 	p.tlsConfig = tls.Config{
 		GetCertificate: p.GetCertificate,
+		MinVersion:               tls.VersionTLS12,
+		CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP521, tls.CurveP384, tls.CurveP256},
+		PreferServerCipherSuites: true,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+		},
 		NextProtos:     append(nextProtos, acme.ALPNProto),
 	}
 	p.connectionsContext = make(map[string]contextInfo)

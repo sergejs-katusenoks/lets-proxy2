@@ -10,14 +10,14 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/rekby/lets-proxy2/internal/cert_manager"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/cert_manager"
 
 	_ "github.com/kardianos/minwinsvc"
-	"github.com/rekby/lets-proxy2/internal/acme_client_manager"
-	"github.com/rekby/lets-proxy2/internal/cache"
-	"github.com/rekby/lets-proxy2/internal/log"
-	"github.com/rekby/lets-proxy2/internal/proxy"
-	"github.com/rekby/lets-proxy2/internal/tlslistener"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/acme_client_manager"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/cache"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/log"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/proxy"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/tlslistener"
 	zc "github.com/rekby/zapcontext"
 	"go.uber.org/zap"
 )

@@ -3,7 +3,7 @@ package domain_checker
 // DO NOT EDIT!
 // The code below was generated with http://github.com/gojuno/minimock (dev)
 
-//go:generate minimock -i github.com/rekby/lets-proxy2/internal/domain_checker.DomainChecker -o ./domain_checker_mock_test.go
+//go:generate minimock -i github.com/sergejs-katusenoks/lets-proxy2/internal/domain_checker.DomainChecker -o ./domain_checker_mock_test.go
 
 import (
 	"sync/atomic"

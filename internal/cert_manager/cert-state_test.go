@@ -13,7 +13,7 @@ import (
 	"time"
 
 	td "github.com/maxatome/go-testdeep"
-	"github.com/rekby/lets-proxy2/internal/th"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/th"
 )
 
 func TestCertState(t *testing.T) {

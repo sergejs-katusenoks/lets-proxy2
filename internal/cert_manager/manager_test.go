@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rekby/lets-proxy2/internal/cache"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/cache"
 
 	"go.uber.org/zap"
 
@@ -23,7 +23,7 @@ import (
 	"github.com/gojuno/minimock"
 
 	"github.com/maxatome/go-testdeep"
-	"github.com/rekby/lets-proxy2/internal/th"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/th"
 
 	"golang.org/x/crypto/acme"
 )

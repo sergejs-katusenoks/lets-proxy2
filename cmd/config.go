@@ -11,13 +11,13 @@ import (
 
 	"github.com/gobuffalo/packr"
 
-	"github.com/rekby/lets-proxy2/internal/tlslistener"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/tlslistener"
 
-	"github.com/rekby/lets-proxy2/internal/proxy"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/proxy"
 
-	"github.com/rekby/lets-proxy2/internal/domain_checker"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/domain_checker"
 
-	"github.com/rekby/lets-proxy2/internal/log"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/log"
 
 	"github.com/BurntSushi/toml"
 	zc "github.com/rekby/zapcontext"

@@ -11,10 +11,10 @@ import (
 
 	"github.com/maxatome/go-testdeep"
 
-	"github.com/rekby/lets-proxy2/internal/cache"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/cache"
 
 	"github.com/gojuno/minimock"
-	"github.com/rekby/lets-proxy2/internal/th"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/th"
 )
 
 const testACMEServer = "http://localhost:4000/directory"

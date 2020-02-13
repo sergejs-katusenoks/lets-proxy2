@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/rekby/lets-proxy2/internal/contextlabel"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/contextlabel"
 
-	"github.com/rekby/lets-proxy2/internal/log"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/log"
 
 	zc "github.com/rekby/zapcontext"
 
