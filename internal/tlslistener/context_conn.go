@@ -4,13 +4,20 @@ import (
 	"context"
 	"net"
 
+	"github.com/rekby/lets-proxy2/internal/log"
+
+	"golang.org/x/xerrors"
+
+	"github.com/rekby/lets-proxy2/internal/metrics"
+
 	zc "github.com/rekby/zapcontext"
 )
 
 type ContextConnextion struct {
 	net.Conn
 	context.Context
-	CloseFunc func() error
+	CloseFunc        func() error
+	connCloseHandler metrics.ProcessFinishFunc
 }
 
 func (c ContextConnextion) GetContext() context.Context {
@@ -18,6 +25,10 @@ func (c ContextConnextion) GetContext() context.Context {
 }
 
 func (c ContextConnextion) Close() error {
+	if c.connCloseHandler != nil {
+		c.connCloseHandler(nil)
+		c.connCloseHandler = nil
+	}
 	if c.CloseFunc == nil {
 		return c.Conn.Close()
 	}
@@ -25,8 +36,13 @@ func (c ContextConnextion) Close() error {
 }
 
 func finalizeContextConnection(conn *ContextConnextion) {
-	go func() {
-		zc.L(conn.Context).Warn("Leaked connection")
-		_ = conn.Close()
-	}()
+	logger := zc.L(conn.Context)
+	defer log.HandlePanic(logger)
+
+	if conn.connCloseHandler != nil {
+		conn.connCloseHandler(xerrors.New("Leak connection"))
+		conn.connCloseHandler = nil
+	}
+	logger.Warn("Leaked connection")
+	_ = conn.Close()
 }

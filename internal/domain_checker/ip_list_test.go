@@ -49,7 +49,7 @@ func TestIsPublicIp(t *testing.T) {
 }
 
 func TestGetBindedIpAddress(t *testing.T) {
-	ctx, cancel := th.TestContext()
+	ctx, cancel := th.TestContext(t)
 	defer cancel()
 
 	td := testdeep.NewT(t)
@@ -83,7 +83,7 @@ func TestFilterPublicOnlyIPs(t *testing.T) {
 }
 
 func TestIPList_Update(t *testing.T) {
-	ctx, cancel := th.TestContext()
+	ctx, cancel := th.TestContext(t)
 	defer cancel()
 
 	td := testdeep.NewT(t)
@@ -130,7 +130,7 @@ func TestIPList_Update(t *testing.T) {
 }
 
 func TestIPList_UpdateByTimer(t *testing.T) {
-	ctx, cancel := th.TestContext()
+	ctx, cancel := th.TestContext(t)
 	defer cancel()
 
 	td := testdeep.NewT(t)
@@ -198,10 +198,10 @@ func TestSetDefaultResolver(t *testing.T) {
 func TestSelfPublicIP_IsDomainAllowed(t *testing.T) {
 	var _ DomainChecker = &IPList{}
 
-	ctx, cancel := th.TestContext()
+	ctx, cancel := th.TestContext(t)
 	defer cancel()
 
-	ctx2, ctx2Cancel := th.TestContext()
+	ctx2, ctx2Cancel := th.TestContext(t)
 	defer ctx2Cancel()
 
 	td := testdeep.NewT(t)
@@ -263,7 +263,7 @@ func TestSelfPublicIP_IsDomainAllowed(t *testing.T) {
 }
 
 func TestSelfPublicIP_IsDomainAllowed_CanceledMainContext(t *testing.T) {
-	ctx, cancel := th.TestContext()
+	ctx, cancel := th.TestContext(t)
 	defer cancel()
 
 	mainCtx, mainCtxCancel := context.WithCancel(context.Background())
@@ -281,7 +281,7 @@ func TestSelfPublicIP_IsDomainAllowed_CanceledMainContext(t *testing.T) {
 }
 
 func TestIPList_DoubleStart(t *testing.T) {
-	ctx, cancel := th.TestContext()
+	ctx, cancel := th.TestContext(t)
 	defer cancel()
 
 	td := testdeep.NewT(t)
@@ -300,26 +300,6 @@ func TestIPList_DoubleStart(t *testing.T) {
 		s.ctx = zc.WithLogger(ctx, zap.NewNop()) // force no panic on dpanic
 		s.StartAutoRenew()
 	})
-}
-
-func TestCreateGetSelfPublicBinded(t *testing.T) {
-	ctx, cancel := th.TestContext()
-	defer cancel()
-
-	td := testdeep.NewT(t)
-
-	var binded InterfacesAddrFunc = func() (addrs []net.Addr, e error) {
-		return []net.Addr{
-			&net.IPNet{IP: net.ParseIP("1.2.3.4"), Mask: net.CIDRMask(32, 32)},
-			&net.IPNet{IP: net.ParseIP("127.0.0.1"), Mask: net.CIDRMask(32, 32)},
-		}, nil
-	}
-
-	f := CreateGetSelfPublicBinded(binded)
-	ips, err := f(ctx)
-	td.CmpDeeply(len(ips), 1)
-	td.True(ips[0].Equal(net.ParseIP("1.2.3.4")))
-	td.CmpNoError(err)
 }
 
 func TestTruncatedCopyIPs(t *testing.T) {

@@ -2,14 +2,21 @@ package th
 
 import (
 	"context"
+	"io"
+
+	"go.uber.org/zap/zaptest"
 
 	zc "github.com/rekby/zapcontext"
 
 	"go.uber.org/zap"
 )
 
-func TestContext() (ctx context.Context, flush func()) {
-	ctx, cancel := context.WithCancel(zc.WithLogger(context.Background(), zap.NewNop().WithOptions(zap.Development())))
+func TestContext(t zaptest.TestingT) (ctx context.Context, flush func()) {
+	ctx, cancel := context.WithCancel(
+		zc.WithLogger(context.Background(),
+			Logger(t),
+		),
+	)
 	flush = func() {
 		cancel()
 	}
@@ -19,4 +26,12 @@ func TestContext() (ctx context.Context, flush func()) {
 
 func NoLog(ctx context.Context) context.Context {
 	return zc.WithLogger(ctx, zap.NewNop().WithOptions(zap.Development()))
+}
+
+func Logger(t zaptest.TestingT) *zap.Logger {
+	return zaptest.NewLogger(t, zaptest.WrapOptions(zap.Development()))
+}
+
+func Close(closer io.Closer) {
+	_ = closer.Close()
 }

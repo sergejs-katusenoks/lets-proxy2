@@ -2,13 +2,25 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 	"time"
+
+	"golang.org/x/xerrors"
+
+	"github.com/rekby/lets-proxy2/internal/config"
+
+	"github.com/rekby/lets-proxy2/internal/secrethandler"
+
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/rekby/lets-proxy2/internal/metrics"
 
 	"go.uber.org/zap/zapcore"
 
@@ -54,14 +66,55 @@ func version() string {
 	return fmt.Sprintf("Version: '%v', Os: '%v', Arch: '%v'", VERSION, runtime.GOOS, runtime.GOARCH)
 }
 
+func startMetrics(ctx context.Context, r prometheus.Gatherer, config config.Config, getCertificate func(*tls.ClientHelloInfo) (*tls.Certificate, error)) error {
+	if !config.Enable {
+		return nil
+	}
+
+	loggerLocal := zc.L(ctx).Named("startMetrics")
+
+	listener := &tlslistener.ListenersHandler{GetCertificate: getCertificate}
+	err := config.GetListenConfig().Apply(ctx, listener)
+	log.DebugFatal(loggerLocal, err, "Apply listen config")
+	if err != nil {
+		return xerrors.Errorf("apply config settings to metrics listener: %w", err)
+	}
+
+	err = listener.Start(zc.WithLogger(ctx, zc.L(ctx).Named("metrics_listener")), nil)
+	log.DebugFatal(loggerLocal, err, "start metrics listener")
+	if err != nil {
+		return xerrors.Errorf("start metrics listener: %w", err)
+	}
+
+	m := metrics.New(zc.L(ctx).Named("metrics"), r)
+
+	secretMetric := secrethandler.New(zc.L(ctx).Named("metrics_secret"), config.GetSecretHandlerConfig(), m)
+	go func() {
+		defer log.HandlePanic(loggerLocal)
+
+		err := http.Serve(listener, secretMetric)
+		var effectiveError = err
+		if effectiveError == http.ErrServerClosed {
+			effectiveError = nil
+		}
+		log.DebugDPanic(loggerLocal, effectiveError, "Handle metric stopped")
+	}()
+	return nil
+}
+
+//nolint:funlen
 func startProgram(config *configType) {
 	logger := initLogger(config.Log)
 	ctx := zc.WithLogger(context.Background(), logger)
 
 	logger.Info("StartAutoRenew program version", zap.String("version", version()))
 
-	startProfiler(ctx, config.Profiler)
+	var registry *prometheus.Registry
+	if config.Metrics.Enable {
+		registry = prometheus.NewRegistry()
+	}
 
+	startProfiler(ctx, config.Profiler)
 	err := os.MkdirAll(config.General.StorageDir, defaultDirMode)
 	log.InfoFatal(logger, err, "Create storage dir", zap.String("dir", config.General.StorageDir))
 
@@ -71,12 +124,24 @@ func startProgram(config *configType) {
 	acmeClient, err := clientManager.GetClient(ctx)
 	log.DebugFatal(logger, err, "Get acme client")
 
-	certManager := cert_manager.New(acmeClient, storage)
+	certManager := cert_manager.New(acmeClient, storage, registry)
 	certManager.CertificateIssueTimeout = time.Duration(config.General.IssueTimeout) * time.Second
 	certManager.SaveJSONMeta = config.General.StoreJSONMetadata
 
+	certManager.AllowECDSACert = config.General.AllowECDSACert
+	certManager.AllowRSACert = config.General.AllowRSACert
+
+	for _, subdomain := range config.General.Subdomains {
+		subdomain = strings.TrimSpace(subdomain)
+		subdomain = strings.TrimSuffix(subdomain, ".") + "." // must ends with dot
+		certManager.AutoSubdomains = append(certManager.AutoSubdomains, subdomain)
+	}
+
 	certManager.DomainChecker, err = config.CheckDomains.CreateDomainChecker(ctx)
 	log.DebugFatal(logger, err, "Config domain checkers.")
+
+	err = startMetrics(ctx, registry, config.Metrics, certManager.GetCertificate)
+	log.InfoFatalCtx(ctx, err, "start metrics")
 
 	tlsListener := &tlslistener.ListenersHandler{
 		GetCertificate: certManager.GetCertificate,
@@ -85,7 +150,7 @@ func startProgram(config *configType) {
 	err = config.Listen.Apply(ctx, tlsListener)
 	log.DebugFatal(logger, err, "Config listeners")
 
-	err = tlsListener.Start(ctx)
+	err = tlsListener.Start(ctx, registry)
 	log.DebugFatal(logger, err, "StartAutoRenew tls listener")
 
 	p := proxy.NewHTTPProxy(ctx, tlsListener)
@@ -95,6 +160,14 @@ func startProgram(config *configType) {
 	}
 	err = config.Proxy.Apply(ctx, p)
 	log.InfoFatal(logger, err, "Apply proxy config")
+
+	go func() {
+		defer log.HandlePanic(logger)
+
+		<-ctx.Done()
+		err := p.Close()
+		log.DebugError(logger, err, "Stop proxy")
+	}()
 
 	err = p.Start()
 	var effectiveError = err
@@ -113,6 +186,8 @@ func startProfiler(ctx context.Context, config profiler.Config) {
 	}
 
 	go func() {
+		defer log.HandlePanic(logger)
+
 		httpServer := http.Server{
 			Addr:    config.BindAddress,
 			Handler: profiler.New(logger.Named("profiler"), config),

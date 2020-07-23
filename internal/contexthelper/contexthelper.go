@@ -18,6 +18,10 @@ type CombinedContext struct {
 	err  error
 }
 
+type droppedCancelContext struct {
+	ctx context.Context
+}
+
 // Deadline return minimum of contextx deadlines, if present
 func (cc *CombinedContext) Deadline() (deadline time.Time, ok bool) {
 	return cc.deadline, cc.deadlineOk
@@ -73,6 +77,7 @@ func CombineContext(contexts ...context.Context) *CombinedContext {
 		deadlineMin = deadline
 	}
 	res.deadline, res.deadlineOk = deadlineMin, deadlineOk
+	// handlepanic: no external call
 	go res.waitCloseAny()
 	return res
 }
@@ -92,4 +97,24 @@ func (cc *CombinedContext) waitCloseAny() {
 	cc.err = err
 	close(cc.done)
 	cc.mu.Unlock()
+}
+
+func DropCancelContext(ctx context.Context) context.Context {
+	return droppedCancelContext{ctx}
+}
+
+func (d droppedCancelContext) Deadline() (deadline time.Time, ok bool) {
+	return time.Time{}, false
+}
+
+func (d droppedCancelContext) Done() <-chan struct{} {
+	return nil
+}
+
+func (d droppedCancelContext) Err() error {
+	return nil
+}
+
+func (d droppedCancelContext) Value(key interface{}) interface{} {
+	return d.ctx.Value(key)
 }

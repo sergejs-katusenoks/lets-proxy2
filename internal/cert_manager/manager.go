@@ -21,6 +21,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rekby/lets-proxy2/internal/contexthelper"
+
+	"github.com/rekby/lets-proxy2/internal/metrics"
+
+	"github.com/prometheus/client_golang/prometheus"
+
 	"golang.org/x/xerrors"
 
 	"github.com/rekby/lets-proxy2/internal/cache"
@@ -42,8 +48,12 @@ const (
 const domainKeyRSALength = 2048
 const renewBeforeExpire = time.Hour * 24 * 30
 const revokeAuthorizationTimeout = 5 * time.Minute
+const cleanupTimeout = time.Minute
 
 var errHaveNoCert = errors.New("have no certificate for domain") // may return for any internal error
+var errRSADenied = xerrors.New("RSA certificate denied by config")
+var errECDSADenied = xerrors.New("ECDSA certificate denied by config")
+var errCertTypeUnknown = xerrors.New("unknown cert type")
 
 type GetContext interface {
 	GetContext() context.Context
@@ -74,6 +84,10 @@ type Manager struct {
 	CertificateIssueTimeout time.Duration
 	Cache                   cache.Bytes
 
+	// Subdomains, auto-issued with main domain.
+	// Every subdomain must have suffix dot. For example: "www."
+	AutoSubdomains []string
+
 	// Client is used to perform low-level operations, such as account registration
 	// and requesting new certificates.
 	//
@@ -87,6 +101,8 @@ type Manager struct {
 	EnableHTTPValidation bool
 	EnableTLSValidation  bool
 	SaveJSONMeta         bool
+	AllowECDSACert       bool
+	AllowRSACert         bool
 
 	certForDomainAuthorize cache.Value
 
@@ -94,9 +110,13 @@ type Manager struct {
 	certState   cache.Value
 
 	httpTokens cache.Bytes
+
+	// metrics
+	handleCertStart, certRequestStart   metrics.ProcessStartFunc
+	handleCertFinish, certRequestFinish metrics.ProcessFinishFunc
 }
 
-func New(client AcmeClient, c cache.Bytes) *Manager {
+func New(client AcmeClient, c cache.Bytes, r prometheus.Registerer) *Manager {
 	res := Manager{}
 	res.Client = client
 	res.certForDomainAuthorize = cache.NewMemoryValueLRU("authcert")
@@ -106,11 +126,19 @@ func New(client AcmeClient, c cache.Bytes) *Manager {
 	res.Cache = c
 	res.EnableTLSValidation = true
 	res.DomainChecker = managerDefaults{}
+	res.AllowRSACert = true
+	res.AllowECDSACert = true
+
+	res.initMetrics(r)
 	return &res
 }
 
 // GetCertificate implements the tls.Config.GetCertificate hook.
 func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (resultCert *tls.Certificate, err error) {
+	m.handleCertStart()
+	defer func() {
+		m.handleCertFinish(err)
+	}()
 	ctx := hello.Conn.(GetContext).GetContext()
 
 	logger := zc.L(ctx)
@@ -123,7 +151,7 @@ func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (resultCert *tls.Ce
 
 	logger = logger.With(logDomain(needDomain))
 	ctx = zc.WithLogger(ctx, logger)
-	defer handlePanic(logger)
+	defer log.HandlePanic(logger)
 
 	logger.Info("Get certificate", zap.String("original_domain", hello.ServerName))
 	if isTLSALPN01Hello(hello) {
@@ -147,7 +175,20 @@ func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (resultCert *tls.Ce
 
 //nolint:funlen,gocognit
 func (m *Manager) getCertificate(ctx context.Context, needDomain DomainName, certType KeyType) (resultCert *tls.Certificate, err error) {
-	certDescription := CertDescriptionFromDomain(needDomain, certType)
+	switch certType {
+	case KeyRSA:
+		if !m.AllowRSACert {
+			return nil, errRSADenied
+		}
+	case KeyECDSA:
+		if !m.AllowECDSACert {
+			return nil, errECDSADenied
+		}
+	default:
+		return nil, errCertTypeUnknown
+	}
+
+	certDescription := CertDescriptionFromDomain(needDomain, certType, m.AutoSubdomains)
 
 	logger := zc.L(ctx).With(certDescription.ZapField())
 	ctx = zc.WithLogger(ctx, zc.L(ctx).With(certDescription.ZapField()))
@@ -167,6 +208,7 @@ func (m *Manager) getCertificate(ctx context.Context, needDomain DomainName, cer
 				}
 			}
 			if !locked {
+				// handlepanic: in renewCertInBackground
 				go m.renewCertInBackground(ctx, needDomain, certDescription)
 			}
 		}
@@ -227,7 +269,11 @@ func (m *Manager) getCertificate(ctx context.Context, needDomain DomainName, cer
 	return m.issueNewCert(ctx, needDomain, certDescription)
 }
 
-func (m *Manager) issueNewCert(ctx context.Context, needDomain DomainName, cd CertDescription) (*tls.Certificate, error) {
+func (m *Manager) issueNewCert(ctx context.Context, needDomain DomainName, cd CertDescription) (cert *tls.Certificate, err error) {
+	m.certRequestStart()
+	defer func() {
+		m.certRequestFinish(err)
+	}()
 	logger := zc.L(ctx)
 
 	allowed, err := m.DomainChecker.IsDomainAllowed(ctx, needDomain.ASCII())
@@ -283,6 +329,7 @@ func filterDomains(ctx context.Context, checker DomainChecker, originalDomains [
 
 		go func() {
 			defer wg.Done()
+			defer log.HandlePanic(logger)
 
 			allow, err := checker.IsDomainAllowed(ctx, domain.ASCII())
 			logger.Debug("Check domain", logDomain(domain), zap.Bool("allowed", allow), zap.Error(err))
@@ -320,7 +367,7 @@ func (m *Manager) certStateGet(ctx context.Context, cd CertDescription) *certSta
 	if err == cache.ErrCacheMiss {
 		err = nil
 	}
-	log.DebugFatalCtx(ctx, err, "Got cert state from cache", zap.Bool("is_emapty", resInterface == nil))
+	log.DebugFatalCtx(ctx, err, "Got cert state from cache", zap.Bool("is_empty", resInterface == nil))
 	if resInterface == nil {
 		resInterface = &certState{}
 		err = m.certState.Put(ctx, cd.String(), resInterface)
@@ -379,22 +426,34 @@ func (m *Manager) createOrderForDomains(ctx context.Context, domains ...DomainNa
 	logger.Debug("Start order authorization.")
 	var order *acme.Order
 
+	firstLoop := true
 authorizeOrderLoop:
 	for {
+		if ctx.Err() != nil {
+			return nil, xerrors.Errorf("context canceled: %w", ctx.Err())
+		}
+
+		if firstLoop {
+			firstLoop = false
+		} else {
+			time.Sleep(time.Second)
+		}
 		authIDs := make([]acme.AuthzID, len(domains))
 		for i := range domains {
 			authIDs[i] = acme.AuthzID{Type: "dns", Value: domains[i].ASCII()}
 		}
 		var err error
 		order, err = m.Client.AuthorizeOrder(ctx, authIDs)
-		log.DebugError(logger, err, "Create authorization order.")
+		log.DebugError(logger, err, "Create authorization order.", zap.Reflect("order", order))
 		if err != nil {
 			return nil, err
 		}
 
 		//noinspection GoDeferInLoop
-		defer func() {
-			go func() {
+		defer func(order *acme.Order) {
+			go func(order *acme.Order) {
+				defer log.HandlePanic(logger)
+
 				revokeLogger := logger.Named("background_auth_revoker")
 
 				revokeCtx, cancel := context.WithTimeout(context.Background(), revokeAuthorizationTimeout)
@@ -402,8 +461,8 @@ authorizeOrderLoop:
 
 				revokeCtx = zc.WithLogger(revokeCtx, revokeLogger)
 				m.deactivatePendingAuthz(revokeCtx, order.AuthzURLs)
-			}()
-		}()
+			}(order)
+		}(order)
 
 		switch order.Status {
 		case acme.StatusReady:
@@ -423,7 +482,8 @@ authorizeOrderLoop:
 	authDomainLoop:
 		for _, zurl := range order.AuthzURLs {
 			z, err := client.GetAuthorization(ctx, zurl)
-			log.DebugError(logger, err, "Get authorization object.", zap.String("domain", z.Identifier.Value))
+
+			log.DebugError(logger, err, "Get authorization object.", zap.Reflect("authorization", z))
 			if err != nil {
 				return nil, err
 			}
@@ -449,16 +509,24 @@ authorizeOrderLoop:
 
 				// Respond to the challenge and wait for validation result.
 				cleanup, err := m.fulfill(ctx, chal, DomainName(z.Identifier.Value))
+				log.DebugError(logger, err, "Write respond to challenge")
 				if err != nil {
 					continue authorizeOrderLoop
 				}
+				cleanupContext, cleanupContextCancel := context.WithTimeout(contexthelper.DropCancelContext(ctx), cleanupTimeout)
 				//noinspection GoDeferInLoop
-				defer cleanup(ctx)
+				defer cleanupContextCancel()
+				//noinspection GoDeferInLoop
+				defer cleanup(cleanupContext)
 
-				if _, err := client.Accept(ctx, chal); err != nil {
+				authorizedChallenge, err := client.Accept(ctx, chal)
+				log.DebugError(logger, err, "accept authorization", zap.Reflect("authorized_challenge", authorizedChallenge))
+				if err != nil {
 					continue authorizeOrderLoop
 				}
-				if _, err := client.WaitAuthorization(ctx, z.URI); err != nil {
+				authorization, err := client.WaitAuthorization(ctx, z.URI)
+				log.DebugError(logger, err, "wait authorization", zap.Reflect("authorization", authorization))
+				if err != nil {
 					continue authorizeOrderLoop
 				}
 			}
@@ -471,7 +539,7 @@ authorizeOrderLoop:
 		// All authorizations are satisfied.
 		// Wait for the CA to update the order status.
 		order, err = client.WaitOrder(ctx, order.URI)
-		log.DebugWarning(logger, err, "Wait order authorization.")
+		log.DebugWarning(logger, err, "Wait order authorization.", zap.Reflect("order", order))
 		if err == nil {
 			break authorizeOrderLoop
 		}
@@ -531,6 +599,7 @@ func (m *Manager) issueCertificate(ctx context.Context, cd CertDescription, orde
 func (m *Manager) renewCertInBackground(ctx context.Context, needDomain DomainName, cd CertDescription) {
 	// detach from request lifetime, but save log context
 	logger := zc.L(ctx).Named("background")
+	defer log.HandlePanic(logger)
 	ctx, ctxCancel := context.WithTimeout(context.Background(), m.CertificateIssueTimeout)
 	defer ctxCancel()
 
@@ -547,7 +616,7 @@ func (m *Manager) deactivatePendingAuthz(ctx context.Context, uries []string) {
 	for _, uri := range uries {
 		localLogger := logger.With(zap.String("uri", uri))
 		authorization, err := m.Client.GetAuthorization(ctx, uri)
-		log.DebugError(localLogger, err, "Get authorization", zap.Any("authorization", authorization))
+		log.DebugError(localLogger, err, "Get authorization", zap.Reflect("authorization", authorization))
 		if err != nil {
 			continue
 		}
@@ -564,7 +633,7 @@ func (m *Manager) certKeyGetOrCreate(ctx context.Context, cd CertDescription) (c
 	logger := zc.L(ctx)
 
 	key, err := getCertificateKey(ctx, m.Cache, cd)
-	log.DebugError(logger, err, "Got certificate key from cache and reuse old key")
+	logger.Debug("Got certificate key from cache and reuse old key", zap.Error(err))
 	if err == nil {
 		return key, nil
 	}
@@ -583,11 +652,15 @@ func (m *Manager) fulfill(ctx context.Context, challenge *acme.Challenge, domain
 	switch challenge.Type {
 	case tlsAlpn01:
 		cert, err := m.Client.TLSALPN01ChallengeCert(challenge.Token, domain.String())
+		log.DebugError(logger, err, "Got TLSALPN01ChallengeCert", log.Cert(&cert))
 		if err != nil {
 			return nil, err
 		}
 		m.putCertToken(ctx, domain, &cert)
-		return func(localContext context.Context) { go m.deleteCertToken(localContext, domain) }, nil
+		return func(localContext context.Context) {
+			// handlepanic: in deleteCertToken
+			go m.deleteCertToken(localContext, domain)
+		}, nil
 	case http01:
 		resp, err := m.Client.HTTP01ChallengeResponse(challenge.Token)
 		if err != nil {
@@ -596,11 +669,20 @@ func (m *Manager) fulfill(ctx context.Context, challenge *acme.Challenge, domain
 		key := domain.ASCII() + "/" + challenge.Token
 		err = m.httpTokens.Put(ctx, key, []byte(resp))
 		log.DebugError(logger, err, "Put token for http-01", zap.String("key", key))
-		return func(localContext context.Context) { _ = m.httpTokens.Delete(localContext, key) }, err
+		if err == nil {
+			return func(localContext context.Context) { _ = m.httpTokens.Delete(localContext, key) }, nil
+		} else {
+			return nil, err
+		}
 	default:
 		logger.Error("Unknow challenge type", zap.Reflect("challenge", challenge))
 		return nil, errors.New("unknown challenge type")
 	}
+}
+
+func (m *Manager) initMetrics(r prometheus.Registerer) {
+	m.handleCertStart, m.handleCertFinish = metrics.ToefCounters(r, "handle_cert", "handled certificates")
+	m.certRequestStart, m.certRequestFinish = metrics.ToefCounters(r, "cert_request", "request certificates from lets-encrypt")
 }
 
 func (m *Manager) isHTTPValidationRequest(r *http.Request) bool {
@@ -647,6 +729,8 @@ func (m *Manager) putCertToken(ctx context.Context, key DomainName, certificate 
 }
 
 func (m *Manager) deleteCertToken(ctx context.Context, key DomainName) {
+	defer log.HandlePanicCtx(ctx)
+
 	err := m.certForDomainAuthorize.Delete(ctx, key.String())
 	log.DebugDPanicCtx(ctx, err, "Delete cert token", zap.String("key", key.String()))
 }
@@ -863,14 +947,6 @@ func isNeedRenew(cert *tls.Certificate, now time.Time) bool {
 		return false
 	}
 	return cert.Leaf.NotAfter.Add(-renewBeforeExpire).Before(now)
-}
-
-// must called as defer handlepanic(logger)
-func handlePanic(logger *zap.Logger) {
-	err := recover()
-	if err != nil {
-		logger.DPanic("Panic handled", zap.Any("panic", err))
-	}
 }
 
 func isCertLocked(ctx context.Context, storage cache.Bytes, certName CertDescription) (bool, error) {

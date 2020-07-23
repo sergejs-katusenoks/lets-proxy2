@@ -2,6 +2,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/rekby/lets-proxy2/badge.svg?branch=master)](https://coveralls.io/github/rekby/lets-proxy2?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rekby/lets-proxy2)](https://goreportcard.com/report/github.com/rekby/lets-proxy2)
 [![GolangCI](https://golangci.com/badges/github.com/rekby/lets-proxy2.svg)](https://golangci.com/r/github.com/rekby/lets-proxy2)
+[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)  
 
 
 Русскоязычное описание ниже (Russian below).
@@ -23,6 +24,7 @@ Features:
 * Self check domain before issue cert (prevent DoS cert issue attack by requests with bad domains)
 * Blacklist/whitelist of domains
 * Lock certificates (force to use manual issued certificate without internal checks)
+* Optional access to internal metrics with Prometheus format
 
 It is next generation of https://github.com/rekby/lets-proxy, rewrited from scratch.
 
@@ -66,6 +68,7 @@ Use --help key for details:
 * Самостоятельная проверка возможности выпуска сертификата перед его запросов (для исключения DoS-атак путем запросов с неправильными доменами)
 * Белый/чёрный списки доменов для выпуска сертификатов
 * Фиксированный сертификат (возможность использовать самостоятельно полученный сертификат, без внутренних проверок и автообновления)
+* Опциональный доступ к внутренним метрикам в формате Prometheus
 
 
 Эта программа - следующая итерация после https://github.com/rekby/lets-proxy, переписанная с нуля.

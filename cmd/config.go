@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/rekby/lets-proxy2/internal/config"
+
 	"github.com/gobuffalo/packr"
 
 	"github.com/rekby/lets-proxy2/internal/profiler"
@@ -28,10 +30,13 @@ import (
 type ConfigGeneral struct {
 	IssueTimeout       int
 	StorageDir         string
+	Subdomains         []string
 	AcmeServer         string
 	StoreJSONMetadata  bool
 	IncludeConfigs     []string
 	MaxConfigFilesRead int
+	AllowRSACert       bool
+	AllowECDSACert     bool
 }
 
 //go:generate packr
@@ -42,6 +47,7 @@ type configType struct {
 	CheckDomains domain_checker.Config
 	Listen       tlslistener.Config
 	Profiler     profiler.Config
+	Metrics      config.Config
 }
 
 //nolint:maligned

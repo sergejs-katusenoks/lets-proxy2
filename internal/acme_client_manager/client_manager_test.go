@@ -8,6 +8,9 @@ import (
 	"math/big"
 	"testing"
 
+	zc "github.com/rekby/zapcontext"
+	"go.uber.org/zap"
+
 	"golang.org/x/crypto/acme"
 
 	"github.com/maxatome/go-testdeep"
@@ -22,7 +25,7 @@ const testACMEServer = "http://localhost:4001/directory"
 
 //go:generate minimock -i github.com/rekby/lets-proxy2/internal/cache.Bytes -o ./cache_bytes_mock_test.go
 func TestClientManagerCreateNew(t *testing.T) {
-	ctx, flush := th.TestContext()
+	ctx, flush := th.TestContext(t)
 	defer flush()
 
 	td := testdeep.NewT(t)
@@ -49,8 +52,9 @@ func TestClientManagerCreateNew(t *testing.T) {
 }
 
 func TestClientManagerGetFromCache(t *testing.T) {
-	ctx, flush := th.TestContext()
+	ctx, flush := th.TestContext(t)
 	defer flush()
+	ctx = zc.WithLogger(ctx, zap.NewNop().WithOptions(zap.Development()))
 
 	td := testdeep.NewT(t)
 
@@ -62,6 +66,7 @@ func TestClientManagerGetFromCache(t *testing.T) {
 	var err error
 
 	manager := New(ctx, c)
+	defer func() { _ = manager.Close() }()
 
 	state := acmeManagerState{
 		AcmeAccount: &acme.Account{},
