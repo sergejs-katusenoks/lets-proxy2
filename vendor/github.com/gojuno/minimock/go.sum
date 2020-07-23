@@ -11,8 +11,6 @@ github.com/gojuno/generator v0.0.0-20180725114326-487ec858da35/go.mod h1:4IWfQdt
 github.com/gojuno/minimock v0.0.0-20180816203457-79a6ca66b6ac/go.mod h1:7OpJlSg2y7dF6oK/IcuOmbYoCRhAchd68hLfxYbMZf0=
 github.com/gojuno/minimock v0.0.0-20190130082935-96af809257c4/go.mod h1:iOiCj/XdRZn6P5/TzsbuF4SR+wPrvHs+nxZoFXuykfk=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
-github.com/heschik/goimports v0.0.0-20181107214206-01b9d28a5b21 h1:O5joO+Z/644iaM4Pl0MD+g1WySHYM1YNgT1ZPKJLFHo=
-github.com/heschik/goimports v0.0.0-20181107214206-01b9d28a5b21/go.mod h1:OojSIbPeQjVvyxj5CBXMXtxP55vfvTHhWE8eKDpj6SM=
 github.com/hexdigest/gowrap v1.1.0 h1:FxSsW1nXJB9TNqz8MJ9TwVXqZ64hPObnmmd32LXMvEI=
 github.com/hexdigest/gowrap v1.1.0/go.mod h1:TQiZrk4d2G7BkoBif7mN+6xOuK4wrF35Tjvrl1uTAbI=
 github.com/hexdigest/gowrap v1.1.1 h1:xrI+otxWu8RJUyhHrUiEpcWV6EHxPiebdKKF0tcmZm4=
