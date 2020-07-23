@@ -1,7 +1,7 @@
-[![Build Status](https://travis-ci.org/rekby/lets-proxy2.svg?branch=master)](https://travis-ci.org/rekby/lets-proxy2)
-[![Coverage Status](https://coveralls.io/repos/github/rekby/lets-proxy2/badge.svg?branch=master)](https://coveralls.io/github/rekby/lets-proxy2?branch=master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/rekby/lets-proxy2)](https://goreportcard.com/report/github.com/rekby/lets-proxy2)
-[![GolangCI](https://golangci.com/badges/github.com/rekby/lets-proxy2.svg)](https://golangci.com/r/github.com/rekby/lets-proxy2)
+[![Build Status](https://travis-ci.org/sergejs-katusenoks/lets-proxy2.svg?branch=master)](https://travis-ci.org/sergejs-katusenoks/lets-proxy2)
+[![Coverage Status](https://coveralls.io/repos/github/sergejs-katusenoks/lets-proxy2/badge.svg?branch=master)](https://coveralls.io/github/sergejs-katusenoks/lets-proxy2?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/sergejs-katusenoks/lets-proxy2)](https://goreportcard.com/report/github.com/sergejs-katusenoks/lets-proxy2)
+[![GolangCI](https://golangci.com/badges/github.com/sergejs-katusenoks/lets-proxy2.svg)](https://golangci.com/r/github.com/sergejs-katusenoks/lets-proxy2)
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)  
 
 
@@ -9,7 +9,7 @@
 
 English description
 ===================
-Home page: https://github.com/rekby/lets-proxy2
+Home page: https://github.com/sergejs-katusenoks/lets-proxy2
 
 Features:
 * http-01 and tls-alpn-01 validation
@@ -51,7 +51,7 @@ Use --help key for details:
 
 Русский (Russian):
 ==================
-Сайт программы: https://github.com/rekby/lets-proxy2
+Сайт программы: https://github.com/sergejs-katusenoks/lets-proxy2
 
 Сейчас это тестовая версия, программа в процессе разработчик и она не готова для реального использования.
 

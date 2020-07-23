@@ -19,9 +19,9 @@ import (
 
 	"github.com/gojuno/minimock/v3"
 	td "github.com/maxatome/go-testdeep"
-	"github.com/rekby/lets-proxy2/internal/cache"
-	"github.com/rekby/lets-proxy2/internal/th"
 	zc "github.com/rekby/zapcontext"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/cache"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/th"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/acme"
 )

@@ -2,7 +2,7 @@ package dns
 
 import (
 	"context"
-	"github.com/rekby/lets-proxy2/internal/log"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/log"
 	zc "github.com/rekby/zapcontext"
 	"net"
 	"sync"

@@ -8,11 +8,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/rekby/lets-proxy2/internal/contexthelper"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/contexthelper"
 
-	"github.com/rekby/lets-proxy2/internal/contextlabel"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/contextlabel"
 
-	"github.com/rekby/lets-proxy2/internal/log"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/log"
 
 	"go.uber.org/zap"
 

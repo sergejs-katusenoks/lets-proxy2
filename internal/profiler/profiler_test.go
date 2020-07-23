@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rekby/lets-proxy2/internal/secrethandler"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/secrethandler"
 
 	"github.com/maxatome/go-testdeep"
 	"go.uber.org/zap"

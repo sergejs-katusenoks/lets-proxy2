@@ -4,8 +4,8 @@ import (
 	"context"
 	"net"
 
-	"github.com/rekby/lets-proxy2/internal/log"
 	zc "github.com/rekby/zapcontext"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/log"
 	"go.uber.org/zap"
 )
 

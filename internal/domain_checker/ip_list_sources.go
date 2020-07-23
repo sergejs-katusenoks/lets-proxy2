@@ -16,8 +16,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 
-	"github.com/rekby/lets-proxy2/internal/log"
 	zc "github.com/rekby/zapcontext"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/log"
 	"go.uber.org/zap"
 )
 

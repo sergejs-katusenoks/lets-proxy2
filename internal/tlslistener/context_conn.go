@@ -4,11 +4,11 @@ import (
 	"context"
 	"net"
 
-	"github.com/rekby/lets-proxy2/internal/log"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/log"
 
 	"golang.org/x/xerrors"
 
-	"github.com/rekby/lets-proxy2/internal/metrics"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/metrics"
 
 	zc "github.com/rekby/zapcontext"
 )

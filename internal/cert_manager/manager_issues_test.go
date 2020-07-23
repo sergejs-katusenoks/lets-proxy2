@@ -3,12 +3,13 @@ package cert_manager
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/gojuno/minimock/v3"
 	"github.com/maxatome/go-testdeep"
-	"github.com/rekby/lets-proxy2/internal/th"
+	"github.com/sergejs-katusenoks/lets-proxy2/internal/th"
 	"golang.org/x/crypto/acme"
 	"golang.org/x/xerrors"
-	"testing"
 )
 
 // Test nil in getAuthorized
