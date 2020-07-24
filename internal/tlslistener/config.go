@@ -10,8 +10,9 @@ import (
 )
 
 type Config struct {
-	TLSAddresses []string
-	TCPAddresses []string
+	TLSAddresses  []string
+	TCPAddresses  []string
+	MinVersionTLS uint16
 }
 
 func (c Config) Apply(ctx context.Context, l *ListenersHandler) error {
@@ -39,7 +40,11 @@ func (c Config) Apply(ctx context.Context, l *ListenersHandler) error {
 
 		tcpListeners = append(tcpListeners, listener)
 	}
+
+	// TODO: read min version from config
+
 	l.ListenersForHandleTLS = tlsListeners
 	l.Listeners = tcpListeners
+	l.MinVersionTLS = 0x0303
 	return nil
 }

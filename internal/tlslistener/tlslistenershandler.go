@@ -31,6 +31,8 @@ type ListenersHandler struct {
 	// ports and translate it to one proxy
 	Listeners []net.Listener
 
+	MinVersionTLS uint16
+
 	NextProtos []string
 
 	ctx           context.Context
@@ -139,7 +141,7 @@ func (p *ListenersHandler) init() {
 
 	p.tlsConfig = tls.Config{
 		GetCertificate:           p.GetCertificate,
-		MinVersion:               tls.VersionTLS12,
+		MinVersion:               p.MinVersionTLS,
 		CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP521, tls.CurveP384, tls.CurveP256},
 		PreferServerCipherSuites: true,
 		CipherSuites: []uint16{
